@@ -1,0 +1,25 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "express",
+  "installCommand": "ONNXRUNTIME_NODE_INSTALL=skip npm ci",
+  "buildCommand": "npm run build",
+  "functions": {
+    "server.js": {
+      "maxDuration": 300,
+      "includeFiles": "node_modules/onnxruntime-node/bin/napi-v6/linux/x64/**",
+      "excludeFiles": "{uploads/**,.cache/**,.env*,tests/**,node_modules/onnxruntime-node/bin/napi-v6/{darwin,win32}/**,node_modules/onnxruntime-node/bin/napi-v6/linux/arm64/**}"
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/cleanup",
+      "schedule": "0 6 * * *"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/index.html"
+    }
+  ]
+}

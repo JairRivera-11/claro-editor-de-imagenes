@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#6012C3">
+  <title>Claro — Estudio de fondos</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" type="module"></script>
+</head>
+<body>
+  <header class="header"><a class="brand" href="/" aria-label="Claro, inicio"><span class="brand-icon">◒</span> claro<span class="brand-dot">.</span></a><span class="header-note">Un nuevo fondo. Otra perspectiva.</span><span class="local-badge"><i></i> Procesamiento local</span></header>
+  <main>
+    <section class="intro"><p class="eyebrow">TU PEQUEÑO ESTUDIO CREATIVO</p><h1>Tu imagen, <em>sin límites.</em></h1><p>Quita el fondo. Encuentra tu color. Hazla tuya.</p></section>
+    <div class="workspace">
+      <section class="preview-card" aria-label="Área de trabajo">
+        <div class="card-heading"><h2><span class="step">01</span> Tu imagen</h2><button id="replace" class="text-button" type="button" hidden>Cambiar imagen ↗</button></div>
+        <input type="file" id="image-input" accept="image/png,image/jpeg,image/webp" hidden>
+        <button id="dropzone" class="dropzone" type="button">
+          <span class="upload-art" aria-hidden="true"><span class="art-sun"></span><span class="art-hill"></span><span class="art-arrow">↑</span></span>
+          <strong>Todo empieza con una imagen</strong><span>Arrástrala aquí o <b>explora tus archivos</b></span><small>PNG, JPG o WebP · Hasta 10 MB</small>
+        </button>
+        <div id="preview-area" class="preview-area" hidden><canvas id="preview" class="checker" tabindex="0" aria-label="Editor: arrastra para mover la imagen. Usa las flechas para ajustes finos."></canvas><div id="alignment-guides" aria-hidden="true"><span id="guide-vertical" hidden></span><span id="guide-horizontal" hidden></span><span id="alignment-label" hidden></span></div><span id="preview-label" class="preview-label">Sin fondo</span></div>
+        <div id="loading" class="loading" hidden role="status"><span class="spinner"></span><strong id="loading-title">Preparando tu imagen…</strong><span>La primera descarga del modelo puede tardar unos minutos.</span></div>
+        <div class="preview-footer"><span id="image-details">Un espacio para darle vida a tus ideas</span><span class="subtle">✧ Hecho por ti</span></div>
+      </section>
+      <aside class="controls-card">
+        <form id="editor-form">
+          <fieldset id="editor" disabled>
+            <section class="option-section"><h2><span class="step">02</span> Dale un nuevo fondo</h2>
+              <div class="background-tabs" role="group" aria-label="Tipo de fondo">
+                <button type="button" data-bg="transparent" class="selected" aria-pressed="true">Sin fondo</button><button type="button" data-bg="color" aria-pressed="false">Color</button><button type="button" data-bg="gradient" aria-pressed="false">Degradado</button><button type="button" data-bg="image" aria-pressed="false">Imagen</button>
+              </div>
+              <div id="bg-transparent" class="bg-panel"><span class="mini-checker checker"></span><p>Deja espacio a lo que importa.<small>Exporta en PNG para conservar la transparencia.</small></p></div>
+              <div id="bg-color" class="bg-panel" hidden><label for="color">Elige tu color</label><input id="color" type="color" value="#e9e6df"><output id="color-value" for="color">#E9E6DF</output></div>
+              <div id="bg-gradient" class="bg-panel gradient-grid" hidden>
+                <button type="button" data-gradient="sunset" class="gradient sunset selected" aria-pressed="true">Atardecer</button><button type="button" data-gradient="ocean" class="gradient ocean" aria-pressed="false">Océano</button><button type="button" data-gradient="lavender" class="gradient lavender" aria-pressed="false">Lavanda</button><button type="button" data-gradient="midnight" class="gradient midnight" aria-pressed="false">Medianoche</button>
+              </div>
+              <div id="bg-image" class="bg-panel" hidden><label class="file-label">Subir fondo propio<input id="background-input" type="file" accept="image/png,image/jpeg,image/webp"></label><small id="background-name">PNG, JPG o WebP · Hasta 10 MB</small></div>
+            </section>
+            <section class="option-section"><h2><span class="step">03</span> Encuentra el tamaño</h2>
+              <div class="dimensions"><label>Ancho <span>px</span><input id="width" type="number" min="1" max="4096" value="1080" required></label><span class="times">×</span><label>Alto <span>px</span><input id="height" type="number" min="1" max="4096" value="1080" required></label></div>
+              <label class="checkbox"><input id="maintain-aspect" type="checkbox" checked> Mantener proporción del sujeto</label>
+              <p class="field-help">Ajusta la imagen al tamaño elegido.</p>
+              <div class="position-actions"><button id="center-subject" type="button">⊕ Centrar imagen</button><button id="reset-position" type="button">Restablecer</button></div>
+              <p id="center-help" class="field-help">Arrastra la imagen con el mouse o el dedo. Al acercarte al centro, las guías y una breve pausa te ayudan a alinearla.</p>
+              <label class="scale-label" for="scale">Escala <output id="scale-value">100%</output></label><input id="scale" type="range" min="10" max="200" value="100"><p class="field-help">También puedes usar la rueda del mouse sobre la imagen. Lo que sale del lienzo se recorta.</p>
+              <div class="presets"><button type="button" data-size="1080,1080">Instagram <small>1:1</small></button><button type="button" data-size="1080,1920">Story <small>9:16</small></button><button type="button" data-size="1200,628">Facebook <small>1.91:1</small></button><button type="button" data-size="1920,1080">HD <small>16:9</small></button></div>
+            </section>
+            <section class="option-section export-section"><div><h2><span class="step">04</span> Lista para compartir</h2><label class="format-label" for="format">Formato de descarga</label><select id="format"><option value="png">PNG · máxima calidad</option><option value="jpeg">JPG · archivo más ligero</option></select></div>
+              <div id="quality-control" hidden><label for="quality">Calidad JPG <output id="quality-value">90%</output></label><input id="quality" type="range" min="1" max="100" value="90"><small>Las zonas transparentes se exportarán en blanco.</small></div>
+            </section>
+            <button class="apply-button" id="apply" type="submit">Aplicar cambios <span>↗</span></button>
+          </fieldset>
+        </form>
+        <a id="download" class="download-button disabled" aria-disabled="true">Descargar imagen <span>↓</span></a>
+        <p class="download-note" id="download-note">Tu próxima gran imagen empieza aquí.</p>
+      </aside>
+    </div>
+    <p id="status" class="status" role="status" aria-live="polite">Selecciona una imagen para empezar.</p>
+    <footer><span>MENOS DISTRACCIONES. MÁS POSIBILIDADES.</span><span id="retention-note">Tus imágenes se procesan en este servidor y se borran tras 1 hora de inactividad.</span></footer>
+  </main>
+</body>
+</html>
