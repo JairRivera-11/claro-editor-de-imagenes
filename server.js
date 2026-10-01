@@ -1,3 +1,4 @@
+import { vercelWebRouter } from './services/webRoutes.js';
 import { root, isVercel } from './services/config.js';
 import express from 'express';
 import multer from 'multer';
@@ -22,7 +23,12 @@ app.use('/api', imageRoutes);
 app.use('/uploads', express.static(uploadsDir, {
   dotfiles: 'deny', maxAge: 0, setHeaders: res => res.setHeader('X-Content-Type-Options', 'nosniff'),
 }));
-app.use(express.static(path.join(root, 'public')));
+if (isVercel) {
+  app.use(vercelWebRouter);
+} else {
+  app.get(['/favicon.ico', '/favicon.png'], (req, res) => res.redirect(302, '/favicon.svg'));
+  app.use(express.static(path.join(root, 'public')));
+}
 app.use((req, res) => res.status(404).json({ success: false, error: 'Recurso no encontrado.' }));
 app.use((error, req, res, next) => {
   if (res.headersSent) return next(error);

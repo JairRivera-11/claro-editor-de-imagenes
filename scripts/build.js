@@ -1,3 +1,4 @@
+import { generateWebAssets } from './web-assets.js';
 import { build } from 'esbuild';
 import { rm, readdir } from 'node:fs/promises';
 import path from 'node:path';
@@ -15,4 +16,5 @@ if (process.env.VERCEL === '1' && process.platform === 'linux') {
     if (/providers_(cuda|tensorrt)/.test(name)) await rm(path.join(linux, name), { force: true });
   }
 }
-console.log('Cliente Blob generado; aplicación lista para empaquetar.');
+await generateWebAssets(root);
+console.log('Cliente Blob y recursos de la interfaz integrados en la Function.');

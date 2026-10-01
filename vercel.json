@@ -15,11 +15,5 @@
       "path": "/api/cron/cleanup",
       "schedule": "0 6 * * *"
     }
-  ],
-  "rewrites": [
-    {
-      "source": "/",
-      "destination": "/index.html"
-    }
   ]
 }

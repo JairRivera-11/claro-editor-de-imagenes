@@ -15,7 +15,7 @@ Configuración:
 | Output Directory | Predeterminado de Express; no configurar `dist` |
 | Fluid Compute | Activado |
 
-Estos valores ya están definidos en `package.json` y `vercel.json`. `server.js` exporta Express como handler; en Vercel no abre un puerto ni arranca el temporizador local. Los archivos de `public/` los sirve el CDN de Vercel.
+Estos valores ya están definidos en `package.json` y `vercel.json`. `server.js` exporta Express como handler; en Vercel no abre un puerto ni arranca el temporizador local. Los archivos de `public/` pueden servirse desde el CDN. Además, el build los integra en la Function y Express atiende `/`, `/index.html`, CSS y JavaScript explícitamente. Esto evita depender de `express.static()` para la interfaz. No se necesita una reescritura de `/`.
 
 ## 2. Conectar Vercel Blob
 
@@ -105,3 +105,16 @@ Para terminar la verificación remota se necesita el proyecto y almacén Blob de
 - [Subidas directas con Blob](https://vercel.com/docs/vercel-blob/client-upload)
 - [SDK de Blob](https://vercel.com/docs/vercel-blob/using-blob-sdk)
 - [Frecuencia de Cron según el plan](https://vercel.com/docs/cron-jobs/usage-and-pricing)
+
+
+## Corrección del 404 en la página de inicio
+
+Si el despliegue anterior mostraba `{"success":false,"error":"Recurso no encontrado."}` al abrir `/`:
+
+1. Publica esta versión del código, incluidos `services/webRoutes.js` y `scripts/web-assets.js`.
+2. Conserva **Build Command: `npm run build`**. Genera el cliente de Blob y `services/webAssets.generated.js`.
+3. Usa el `vercel.json` actualizado, sin la reescritura de `/` a `/index.html`.
+4. Genera un nuevo despliegue desde el commit actualizado. Redeploy del commit antiguo vuelve a desplegar el mismo fallo.
+5. Comprueba `/`, `/index.html`, `/styles.css` y `/app.js`: deben responder 200 con su tipo de contenido correspondiente. `/favicon.ico` y `/favicon.png` redirigen al icono SVG.
+
+No cambies Output Directory a `public` o `dist`; conserva el valor predeterminado del preset Express. Si este repositorio contiene directamente `server.js` y `package.json` en la raíz, Root Directory debe ser la raíz, no una subcarpeta inexistente.
