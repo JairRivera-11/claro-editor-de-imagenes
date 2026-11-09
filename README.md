@@ -30,6 +30,12 @@ El archivo `.env` incluido contiene `PORT=3000`. Puedes cambiarlo. Si copias el 
 
 Se usa explícitamente `createBriaaiModel()` de `rmbg@0.1.0`. Al eliminar el primer fondo, **rmbg descargará automáticamente el modelo de IA (~44 MB)**. Esta petición puede tardar más; la interfaz muestra un indicador de procesamiento. El modelo se conserva en `.cache/rmbg/` y las siguientes ejecuciones reutilizan la descarga.
 
+**Licencia del modelo:** la licencia MIT de la librería `rmbg` no cubre necesariamente los pesos. BRIA publica [RMBG-1.4 con licencia para uso no comercial](https://huggingface.co/briaai/RMBG-1.4); el uso comercial requiere comprobar y obtener la licencia correspondiente de BRIA. El paquete distribuye fragmentos de un modelo Briaai; no se ha verificado independientemente la procedencia exacta de esos pesos. No asumas que el modelo incluido es gratuito para uso comercial.
+
+El modelo recibe una imagen estirada a 1024 × 1024; el parámetro `maxResolution` controla la salida, no la inferencia. Se conserva la resolución original admitida y se combina el alfa original con la máscara calculada. La segmentación puede fallar, especialmente con productos superpuestos o fondos similares; no se eliminan componentes ni se reconstruyen detalles automáticamente. Las composiciones siguen limitadas a 4096 px por lado y 16 megapíxeles.
+
+En una prueba con la fotografía Redmi proporcionada (1300 × 1300), la salida directa de Briaai conservó parte del fondo verde casi opaco (alfa 252–253/255). El defecto aparece antes de la vista previa y de la composición; no está corregido. La alternativa U2NetP del mismo paquete redujo gran parte de ese fondo, pero también eliminó una zona de la pantalla, por lo que no es un reemplazo seguro para esta imagen. No se ha validado una solución general que preserve todos los detalles.
+
 Las imágenes se procesan en el servidor Express; no se envían a un servicio de IA externo. En Vercel se almacenan temporalmente en Vercel Blob. ONNX Runtime ejecuta el modelo localmente en CPU. `rmbg` usa JavaScript con los binarios nativos de ONNX Runtime y sharp.
 
 API verificada en el [SDK oficial de rmbg](https://github.com/mrgoonie/rmbg/tree/main/packages/node): `rmbg(buffer, { model, cacheDir, maxResolution })`, con `createBriaaiModel` importado desde `rmbg/models`.

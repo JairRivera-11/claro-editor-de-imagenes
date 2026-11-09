@@ -9,6 +9,8 @@ export async function generateWebAssets(root) {
     'app.js': 'text/javascript; charset=utf-8',
     'geometry.js': 'text/javascript; charset=utf-8',
     'snapping.js': 'text/javascript; charset=utf-8',
+    'mask-brush.js': 'text/javascript; charset=utf-8',
+    'mask-editor.js': 'text/javascript; charset=utf-8',
     'blob-client.js': 'text/javascript; charset=utf-8',
     'favicon.svg': 'image/svg+xml',
   };

@@ -1,13 +1,11 @@
 import { visibleBounds, placement } from '../public/geometry.js';
 import sharp from 'sharp';
-import { rmbg } from 'rmbg';
-import { createBriaaiModel } from 'rmbg/models';
+import { segment, applyMask } from './segmentation.js';
 import { randomUUID } from 'node:crypto';
 import { mkdir } from 'node:fs/promises';
 import { cacheDir, uploadsDir } from './config.js';
 import { storage, initializeStorageAdapter } from './storage.js';
 export { uploadsDir };
-const model = createBriaaiModel();
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const inputOptions = { limitInputPixels: 24_000_000, failOn: 'error' };
 const active = new Set();
@@ -52,10 +50,54 @@ async function withImage(imageId, operation) {
 
 export async function removeBackground(file) {
   const input = await normalize(file);
-  const output = await rmbg(input, { model, cacheDir, maxResolution: 4096 });
+  const { output, mask, engine } = await segment(input);
   const id = randomUUID();
-  const url = await storage.write(`${id}.png`, output);
-  return { imageId: id, url };
+  try {
+    const sourceUrl = await storage.write(`${id}-original.png`, input);
+    const maskUrl = await storage.write(`${id}-mask.png`, mask);
+    const url = await storage.write(`${id}.png`, output);
+    return { imageId: id, url, sourceUrl, maskUrl, engine };
+  } catch (error) { await removeGroup(id).catch(() => {}); throw error; }
+}
+
+export async function saveMask(file, imageId) {
+  return withImage(imageId, async id => {
+    await loadSource(id);
+    let original;
+    try { original = await storage.read(`${id}-original.png`); }
+    catch (error) { if (error.code === 'ENOENT') throw httpError(404, 'Vuelve a subir la foto para habilitar el retoque.'); throw error; }
+    if (file.mimetype !== 'image/png') throw httpError(400, 'La máscara debe ser PNG.');
+    const normalized = await normalize(file);
+    const { width, height } = await sharp(original).metadata();
+    const meta = await sharp(normalized).metadata();
+    if (meta.width !== width || meta.height !== height) throw httpError(400, 'La máscara debe tener las dimensiones de la imagen original.');
+    const mask = await sharp(normalized).removeAlpha().greyscale().png().toBuffer();
+    const output = await applyMask(original, mask);
+    // Revisiones inmutables: una pestaña no cambia el resultado de otra ni recibe
+    // imágenes antiguas desde la caché. El recorte automático permanece intacto.
+    const maskId = randomUUID();
+    const maskUrl = await storage.write(`${id}-mask-${maskId}.png`, mask);
+    const url = await storage.write(`${id}-edit-${maskId}.png`, output);
+    await touchGroup(id);
+    return { maskId, maskUrl, url };
+  });
+}
+
+// rmbg sustituye el alfa de entrada. Multiplicarlo por la máscara preserva
+// transparencias existentes y utiliza el RGB original sin reconstruir detalles.
+export async function preserveOriginalAlpha(input, segmented) {
+  const original = await sharp(input, inputOptions).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const mask = await sharp(segmented, inputOptions).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  if (original.info.width !== mask.info.width || original.info.height !== mask.info.height) {
+    throw new Error('La máscara no coincide con las dimensiones de la imagen original.');
+  }
+  const { data, info } = original;
+  for (let i = 0; i < info.width * info.height; i++) {
+    const sourceAlpha = i * info.channels + info.channels - 1;
+    const maskAlpha = i * mask.info.channels + mask.info.channels - 1;
+    data[sourceAlpha] = Math.round(data[sourceAlpha] * mask.data[maskAlpha] / 255);
+  }
+  return sharp(data, { raw: { width: info.width, height: info.height, channels: info.channels } }).png().toBuffer();
 }
 
 export async function saveBackground(file, imageId) {
@@ -123,7 +165,12 @@ export async function compose(body) {
   if (!['png', 'jpeg'].includes(format)) throw httpError(400, 'El formato debe ser png o jpeg.');
   if (!Number.isInteger(quality) || quality < 1 || quality > 100) throw httpError(400, 'La calidad debe ser un entero de 1 a 100.');
   return withImage(body.imageId, async id => {
-    const source = await loadSource(id);
+    let source = await loadSource(id);
+    if (body.maskId != null) {
+      const maskId = validateId(body.maskId);
+      try { source = await storage.read(`${id}-edit-${maskId}.png`); }
+      catch (error) { if (error.code === 'ENOENT') throw httpError(404, 'El retoque no existe para esta imagen.'); throw error; }
+    }
     const background = await backgroundBuffer(body.background, id, width, height);
     const decoded = await sharp(source, inputOptions).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
     const bounds = visibleBounds(decoded.data, decoded.info.width, decoded.info.height, decoded.info.channels);
@@ -149,7 +196,7 @@ export async function compose(body) {
   });
 }
 
-function belongsTo(name, id) { return name === `${id}.png` || name.startsWith(`${id}-bg-`) || name.startsWith(`${id}-result-`) || name.startsWith(`${id}-touch-`); }
+function belongsTo(name, id) { return name === `${id}.png` || name === `${id}-original.png` || name === `${id}-mask.png` || ['bg', 'result', 'touch', 'mask', 'edit'].some(kind => name.startsWith(`${id}-${kind}-`)); }
 async function removeGroup(id) {
   const names = (await storage.list(id)).map(file => file.name).filter(name => belongsTo(name, id));
   await storage.remove(names);

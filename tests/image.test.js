@@ -227,13 +227,35 @@ test('borra sujeto, fondos y composiciones; cleanup es idempotente', async () =>
   }
   assert.equal((await readdir(uploadsDir)).some(name => name.startsWith(id)), false);
 });
+test('retoque no destructivo: restaura desde el original, exporta alfa y aísla revisiones', async () => {
+  const id=randomUUID();ids.add(id);
+  const original=await sharp({create:{width:100,height:100,channels:4,background:'#0000ff'}}).png().toBuffer();
+  const automatic=await sharp({create:{width:100,height:100,channels:4,background:'#00000000'}}).png().toBuffer();
+  await writeFile(path.join(uploadsDir,`${id}.png`),automatic);
+  await writeFile(path.join(uploadsDir,`${id}-original.png`),original);
+  const maskPixels=Buffer.alloc(10000);for(let y=20;y<80;y++)for(let x=20;x<80;x++)maskPixels[y*100+x]=x===20?128:255;
+  const mask=await sharp(maskPixels,{raw:{width:100,height:100,channels:1}}).png().toBuffer();
+  async function send(buffer){const form=new FormData();form.append('image',new Blob([buffer],{type:'image/png'}),'mask.png');form.append('imageId',id);return fetch(`${base}/api/mask`,{method:'POST',body:form});}
+  const response=await send(mask);assert.equal(response.status,200);
+  const edit=await response.json();assert.ok(edit.maskId&&edit.maskUrl);
+  const out=await pixels(edit.url);assert.deepEqual(pixel(out.data,out.info,50,50),[0,0,255,255]);assert.equal(pixel(out.data,out.info,20,50)[3],128);assert.equal(pixel(out.data,out.info,0,0)[3],0);
+  const saved=await compose(payload({type:'transparent'},{imageId:id,maskId:edit.maskId}));
+  assert.equal(saved.response.status,200);assert.equal(pixel((await pixels(saved.body.url)).data,out.info,20,50)[3],128);
+  const jpg=await compose(payload({type:'color',value:'#ff0000'},{imageId:id,maskId:edit.maskId,format:'jpeg'}));
+  const jpeg=await pixels(jpg.body.url);assert.ok(pixel(jpeg.data,jpeg.info,50,50)[2]>240);assert.ok(pixel(jpeg.data,jpeg.info,0,0)[0]>240);
+  const baseline=await compose(payload({type:'transparent'},{imageId:id}));assert.ok((await pixels(baseline.body.url)).data.every(v=>v===0));
+  assert.equal((await compose(payload({type:'transparent'},{maskId:edit.maskId}))).response.status,404);
+  assert.equal((await compose(payload({type:'transparent'},{imageId:id,maskId:'../bad'}))).response.status,400);
+  assert.equal((await send(subject)).status,400);
+  await cleanup(id);assert.equal((await readdir(uploadsDir)).some(name=>name.startsWith(id)),false);
+});
 test('limpia grupos inactivos durante más de una hora y conserva .gitkeep', async () => {
   await cleanupExpired(Date.now() + 61 * 60 * 1000);
   const names = await readdir(uploadsDir);
   assert.equal(names.some(name => name.startsWith(imageId)), false);
   assert.equal(names.includes('.gitkeep'), true);
 });
-test('inferencia real con rmbg/Briaai y descarga del PNG resultante', { skip: process.env.RMBG_INTEGRATION !== '1', timeout: 300_000 }, async () => {
+test('inferencia real con el motor configurado y descarga del PNG resultante', { skip: process.env.RMBG_INTEGRATION !== '1', timeout: 300_000 }, async () => {
   const image = await sharp(Buffer.from('<svg width="256" height="256"><rect width="256" height="256" fill="white"/><circle cx="128" cy="128" r="75" fill="red"/></svg>')).png().toBuffer();
   const form = new FormData(); form.append('image', new Blob([image], { type: 'image/png' }), 'circle.png');
   const response = await fetch(`${base}/api/remove-bg`, { method: 'POST', body: form });

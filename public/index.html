@@ -28,6 +28,7 @@
       <aside class="controls-card">
         <form id="editor-form">
           <fieldset id="editor" disabled>
+            <section class="option-section retouch-section"><button id="retouch" class="text-button" type="button">✎ Retocar recorte</button><p class="field-help">Borra residuos o recupera partes de la foto con un pincel.</p></section>
             <section class="option-section"><h2><span class="step">02</span> Dale un nuevo fondo</h2>
               <div class="background-tabs" role="group" aria-label="Tipo de fondo">
                 <button type="button" data-bg="transparent" class="selected" aria-pressed="true">Sin fondo</button><button type="button" data-bg="color" aria-pressed="false">Color</button><button type="button" data-bg="gradient" aria-pressed="false">Degradado</button><button type="button" data-bg="image" aria-pressed="false">Imagen</button>
@@ -61,5 +62,24 @@
     <p id="status" class="status" role="status" aria-live="polite">Selecciona una imagen para empezar.</p>
     <footer><span>MENOS DISTRACCIONES. MÁS POSIBILIDADES.</span><span id="retention-note">Tus imágenes se procesan en este servidor y se borran tras 1 hora de inactividad.</span></footer>
   </main>
+  <dialog id="mask-dialog" aria-labelledby="mask-title">
+    <h2 id="mask-title">Retocar recorte</h2>
+    <fieldset id="mask-controls">
+      <div class="mask-toolbar">
+        <label>Herramienta<select id="mask-mode"><option value="erase">Borrar fondo</option><option value="restore">Restaurar original</option></select></label>
+        <label>Tamaño <output id="mask-size-value">40 px</output><input id="mask-size" type="range" min="2" max="400" value="40"></label>
+        <label>Suavidad <output id="mask-softness-value">50%</output><input id="mask-softness" type="range" min="0" max="100" value="50"></label>
+        <button id="mask-undo" type="button">Deshacer</button><button id="mask-redo" type="button">Rehacer</button>
+      </div>
+      <div class="mask-toolbar">
+        <label>Comparar<select id="mask-compare"><option value="edited">Después del retoque</option><option value="before">Antes del retoque</option><option value="original">Foto original</option></select></label>
+        <label>Ver sobre<select id="mask-background"><option value="checker">Transparencia</option><option value="#ffffff">Blanco</option><option value="#000000">Negro</option></select></label>
+        <label>Acercar <output id="mask-zoom-value">100%</output><input id="mask-zoom" type="range" min="1" max="6" step="0.25" value="1"></label>
+      </div>
+      <div id="mask-stage"><canvas id="mask-canvas" class="checker" aria-label="Pinta para borrar o restaurar la máscara"></canvas><span id="mask-cursor" hidden></span></div>
+      <div class="mask-actions"><button id="mask-cancel" type="button">Cancelar</button><button id="mask-save" class="apply-button" type="button">Guardar retoques</button></div>
+    </fieldset>
+    <p id="mask-status" role="status" aria-live="polite"></p>
+  </dialog>
 </body>
 </html>

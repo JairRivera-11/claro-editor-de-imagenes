@@ -13,3 +13,14 @@ footer{color:#e6d3ff;border-color:#ffffff30}.step{color:#714897;background:#f4ed
 #guide-vertical{width:1px;height:100%;left:50%;top:0}
 #guide-horizontal{height:1px;width:100%;top:50%;left:0}
 #alignment-label{position:absolute;top:8px;left:8px;background:#6012C3;color:#fff;border:1px solid #ffffffb3;border-radius:6px;padding:5px 8px;font-size:10px;box-shadow:0 2px 7px #20004326}
+
+/* Retoque opcional: el lienzo siempre representa la foto sin transformación. */
+.retouch-section{padding-bottom:12px;margin-bottom:16px}.retouch-section .text-button{font-size:13px;font-weight:600;padding-left:0}.retouch-section p{margin-bottom:0}
+#mask-dialog{width:min(1100px,96vw);max-height:95vh;border:1px solid #dec5ff;border-radius:16px;padding:22px;color:#252a26;background:#fff;box-shadow:0 20px 80px #20004366}
+#mask-dialog::backdrop{background:#200043aa}#mask-title{font-size:18px;margin-bottom:16px}
+.mask-toolbar{display:flex;align-items:end;gap:14px;flex-wrap:wrap;margin-bottom:12px}.mask-toolbar label{font-size:11px;flex:1;min-width:125px}.mask-toolbar select{margin-top:6px}.mask-toolbar input[type=range]{display:block;width:100%;accent-color:#6012C3;margin-top:10px}.mask-toolbar output{float:right;color:#714897}
+.mask-toolbar button,.mask-actions>button{border:1px solid #dec5ff;border-radius:7px;padding:11px;background:#f3eaff;color:#6012C3;font-size:12px}.mask-toolbar button:disabled{opacity:.45}
+#mask-stage{height:52vh;min-height:220px;overflow:auto;position:relative;background:#eee8f5;border-radius:10px;padding:12px;overscroll-behavior:contain}
+#mask-canvas{display:block;margin:auto;touch-action:none;cursor:crosshair}#mask-cursor{position:absolute;border:1px solid #fff;box-shadow:0 0 0 1px #6012C3;border-radius:50%;pointer-events:none}
+.mask-actions{display:flex;justify-content:flex-end;gap:12px;margin-top:16px}.mask-actions .apply-button{width:auto;min-width:170px}#mask-status{font-size:12px;line-height:1.5;margin:12px 0 0;color:#65516f}#mask-status.error{color:#a23e36}
+@media(max-width:600px){#mask-dialog{padding:14px}.mask-toolbar{gap:10px}.mask-toolbar label{min-width:120px}.mask-toolbar button{padding:8px}#mask-stage{height:40vh}}

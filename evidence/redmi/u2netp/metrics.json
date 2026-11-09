@@ -1,0 +1,116 @@
+{
+  "engine": "u2netp",
+  "node": "v26.3.0",
+  "platform": "darwin/arm64",
+  "coldMs": 582.6543750000001,
+  "warmMs": 671.6710419999999,
+  "peakRssMiB": 364.75,
+  "identicalRepeatedMask": true,
+  "inputSha256": "336741b25e1723d604d230ce449429aae58f2e82557007831ba0eb86c32ba471",
+  "measures": {
+    "fondoIzquierdo": {
+      "rectangle": [
+        60,
+        70,
+        120,
+        1150
+      ],
+      "min": 0,
+      "max": 0,
+      "mean": 0,
+      "transparentFraction": 1,
+      "opaqueFraction": 0
+    },
+    "fondoDerecho": {
+      "rectangle": [
+        1120,
+        70,
+        120,
+        1150
+      ],
+      "min": 0,
+      "max": 0,
+      "mean": 0,
+      "transparentFraction": 1,
+      "opaqueFraction": 0
+    },
+    "fondoSuperior": {
+      "rectangle": [
+        200,
+        55,
+        880,
+        30
+      ],
+      "min": 0,
+      "max": 1,
+      "mean": 0.05159090909090909,
+      "transparentFraction": 1,
+      "opaqueFraction": 0
+    },
+    "fondoInferior": {
+      "rectangle": [
+        200,
+        1220,
+        880,
+        25
+      ],
+      "min": 0,
+      "max": 0,
+      "mean": 0,
+      "transparentFraction": 1,
+      "opaqueFraction": 0
+    },
+    "tapa": {
+      "rectangle": [
+        230,
+        480,
+        460,
+        670
+      ],
+      "min": 255,
+      "max": 255,
+      "mean": 255,
+      "transparentFraction": 0,
+      "opaqueFraction": 1
+    },
+    "pantallaInferior": {
+      "rectangle": [
+        750,
+        880,
+        300,
+        275
+      ],
+      "min": 0,
+      "max": 255,
+      "mean": 31.851175757575756,
+      "transparentFraction": 0.8478909090909091,
+      "opaqueFraction": 0.07192727272727273
+    },
+    "pantallaSuperior": {
+      "rectangle": [
+        740,
+        180,
+        300,
+        650
+      ],
+      "min": 10,
+      "max": 255,
+      "mean": 249.2181487179487,
+      "transparentFraction": 0,
+      "opaqueFraction": 0.9685692307692307
+    },
+    "camaras": {
+      "rectangle": [
+        300,
+        190,
+        325,
+        270
+      ],
+      "min": 255,
+      "max": 255,
+      "mean": 255,
+      "transparentFraction": 0,
+      "opaqueFraction": 1
+    }
+  }
+}

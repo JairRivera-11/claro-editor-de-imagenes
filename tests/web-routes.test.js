@@ -29,6 +29,7 @@ test('la Function empaquetada sirve la interfaz sin public, express.static ni cr
           ['/', 'text/html', 'Tu imagen'], ['/index.html', 'text/html', 'Tu imagen'],
           ['/styles.css', 'text/css', '#6012C3'], ['/app.js', 'javascript', 'uploadFile'],
           ['/geometry.js', 'javascript', 'visibleBounds'], ['/snapping.js', 'javascript', 'snapAxis'],
+          ['/mask-brush.js', 'javascript', 'MaskBrush'], ['/mask-editor.js', 'javascript', 'createMaskEditor'],
           ['/blob-client.js', 'javascript', 'upload'], ['/favicon.svg', 'image/svg+xml', '<svg'],
         ]) {
           const response = await fetch(base + url);

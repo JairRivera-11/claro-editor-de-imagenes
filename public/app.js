@@ -1,5 +1,6 @@
 import { snapAxis } from './snapping.js';
 import { visibleBounds, placement } from './geometry.js';
+import { createMaskEditor } from './mask-editor.js';
 const $ = id => document.getElementById(id);
 const state = { imageId: null, backgroundId: null, background: 'transparent', gradient: 'sunset', busy: false, originalUrl: null, originalWidth: 0, originalHeight: 0, finalUrl: null, subject: null, backgroundImage: null, bounds: null, centerSubject: false, transform: { x: 0, y: 0, scale: 1 } };
 const allowed = { 'image/png': /\.png$/i, 'image/jpeg': /\.jpe?g$/i, 'image/webp': /\.webp$/i };
@@ -53,12 +54,15 @@ async function upload(file) {
     const image = await preload(result.url);
     const oldId = state.imageId;
     state.imageId = newId; state.backgroundId = null; state.originalUrl = result.url;
+    state.sourceUrl = result.sourceUrl; state.maskUrl = result.maskUrl; state.maskId = null;
+    $('retouch').disabled = !result.sourceUrl || !result.maskUrl;
     state.subject = image; state.backgroundImage = null; state.centerSubject = false; state.transform = { x: 0, y: 0, scale: 1 };
     const probe = document.createElement('canvas'); probe.width = image.naturalWidth; probe.height = image.naturalHeight;
     const context = probe.getContext('2d', { willReadFrequently: true }); context.drawImage(image, 0, 0);
     state.bounds = visibleBounds(context.getImageData(0, 0, probe.width, probe.height).data, probe.width, probe.height);
     state.originalWidth = image.naturalWidth; state.originalHeight = image.naturalHeight;
-    $('width').value = image.naturalWidth; $('height').value = image.naturalHeight;
+    const exportScale = Math.min(1, 4096 / Math.max(image.naturalWidth, image.naturalHeight), Math.sqrt(16_000_000 / (image.naturalWidth * image.naturalHeight)));
+    $('width').value = Math.max(1, Math.floor(image.naturalWidth * exportScale)); $('height').value = Math.max(1, Math.floor(image.naturalHeight * exportScale));
     $('background-input').value = ''; $('background-name').textContent = 'PNG, JPG o WebP · Hasta 10 MB';
     $('format').value = 'png'; $('quality-control').hidden = true; $('maintain-aspect').checked = true; $('scale').value = 100; $('scale-value').textContent = '100%';
     selectBackground('transparent', false);
@@ -129,7 +133,7 @@ $('editor-form').addEventListener('submit', async event => {
     if (state.background === 'gradient') background.value = state.gradient;
     if (state.background === 'image') background.fileId = state.backgroundId;
     const result = await request('/api/compose', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
-      imageId: state.imageId, background, centerSubject: state.centerSubject, transform: state.transform, size: { width, height, maintainAspect: $('maintain-aspect').checked }, format: $('format').value, quality: Number($('quality').value),
+      imageId: state.imageId, maskId: state.maskId, background, centerSubject: state.centerSubject, transform: state.transform, size: { width, height, maintainAspect: $('maintain-aspect').checked }, format: $('format').value, quality: Number($('quality').value),
     }) });
     await preload(result.url);
     render(); $('preview-label').textContent = 'Arrastra para seguir ajustando';
@@ -187,6 +191,26 @@ async function uploadFile(endpoint, file, imageId) {
   });
 }
 getRuntimeConfig().catch(error => status(error.message, true));
+
+const maskEditor = createMaskEditor({
+  loadImage: preload,
+  save: file => uploadFile('/api/mask', file, state.imageId),
+  applied: async result => {
+    const subject = await preload(result.url);
+    const probe = document.createElement('canvas'); probe.width = subject.naturalWidth; probe.height = subject.naturalHeight;
+    const context = probe.getContext('2d', { willReadFrequently: true }); context.drawImage(subject, 0, 0);
+    const bounds = visibleBounds(context.getImageData(0, 0, probe.width, probe.height).data, probe.width, probe.height);
+    state.subject = subject; state.bounds = bounds; state.maskId = result.maskId; state.maskUrl = result.maskUrl;
+    probe.width = probe.height = 1;
+    invalidate(); status('Retoques guardados. Pulsa “Aplicar cambios” para preparar tu PNG o JPG.');
+  },
+});
+$('retouch').addEventListener('click', async () => {
+  if (state.busy || !state.sourceUrl || !state.maskUrl) return;
+  try { busy(true, 'Abriendo el retoque…'); await maskEditor.open(state.sourceUrl, state.maskUrl); }
+  catch (error) { status(error.message, true); }
+  finally { busy(false); }
+});
 
 const gradientColors = { sunset: ['#ff9966', '#ff5e62'], ocean: ['#43cea2', '#185a9d'], lavender: ['#c4b5fd', '#fbcfe8'], midnight: ['#0f172a', '#6366f1'] };
 let frame;

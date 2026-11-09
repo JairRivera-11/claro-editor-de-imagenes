@@ -34,6 +34,19 @@ export async function compose(req, res, next) {
   } catch (error) { next(error); }
 }
 
+export async function updateMask(req, res, next) {
+  let uploaded;
+  try {
+    uploaded = await resolveUpload(req);
+    const result = await images.saveMask(uploaded.file, req.body.imageId);
+    await uploaded.dispose().catch(console.error); uploaded = undefined;
+    res.json({ success: true, ...result });
+  } catch (error) {
+    await uploaded?.dispose().catch(console.error);
+    next(error);
+  }
+}
+
 export async function cleanup(req, res, next) {
   try {
     await images.cleanup(req.params.imageId);
