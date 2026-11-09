@@ -9,6 +9,9 @@ export const storageMode = isVercel ? 'blob' : (process.env.STORAGE_DRIVER || 'l
 if (!['local', 'blob'].includes(storageMode)) throw new Error('STORAGE_DRIVER debe ser local o blob.');
 export const uploadsDir = process.env.REMBG_UPLOADS_DIR || path.join(isVercel ? tmpdir() : root, 'uploads');
 export const cacheDir = isVercel ? path.join(tmpdir(), 'claro-rmbg') : path.join(root, '.cache', 'rmbg');
+// El paquete desplegado es de solo lectura; los pesos no viajan en el bundle.
+export const modelDir = process.env.BIREFNET_MODEL_DIR || path.join(isVercel ? tmpdir() : root, isVercel ? 'claro-birefnet' : '.cache/birefnet');
+export const autoDownloadModels = process.env.BIREFNET_AUTO_DOWNLOAD === '1' || (isVercel && process.env.BIREFNET_AUTO_DOWNLOAD !== '0');
 export const maxUploadBytes = 10 * 1024 * 1024;
 export const ttl = 60 * 60 * 1000;
 export function assertStorageConfigured() {

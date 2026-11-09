@@ -51,7 +51,15 @@ Haz Deploy o Redeploy después de conectar Blob y configurar las variables.
 4. Prueba también una imagen de más de 4,5 MB y menos de 10 MB.
 5. Comprueba la ejecución del cron en la sección Cron Jobs del proyecto.
 
-El modelo Briaai (~44 MB) se descarga en `/tmp/claro-rmbg`. Puede reutilizarse en una instancia caliente; una instancia nueva puede necesitar descargarlo de nuevo. El modelo se ejecuta en CPU, con un máximo de 300 segundos por petición.
+El motor predeterminado es **BiRefNet Lite** (224 MB). En Vercel se descarga automáticamente desde el release oficial en `/tmp/claro-birefnet/lite.onnx` al procesar la primera imagen. La descarga se transmite a disco, se comprueban tamaño y SHA-256 y solo entonces se carga en ONNX. Una instancia caliente reutiliza la sesión; una instancia nueva puede descargar otra vez. El límite de la petición es 300 segundos y el de la descarga, 120 segundos. Un fallo de descarga permite reintentar sin dejar un modelo parcial activo.
+
+### Error «Falta el modelo birefnet-lite»
+
+Ese error ocurría porque el código buscaba `.cache/birefnet` dentro del paquete desplegado, pero `.cache` está excluido. Publica la versión con `services/modelStore.js`, `services/config.js` y `services/segmentation.js` actualizados y genera **un nuevo despliegue del código actualizado**. No ejecutes la descarga en el build ni incluyas `.cache` en Git: la instalación local no se transfiere a Vercel.
+
+Conserva `SEGMENTATION_ENGINE=birefnet-lite` o deja esa variable sin definir. No establezcas `BIREFNET_AUTO_DOWNLOAD=0` en Vercel; elimina cualquier `BIREFNET_MODEL_DIR` que apunte a una ruta de tu computadora. El valor predeterminado de descarga en Vercel ya está habilitado.
+
+**Recursos:** la prueba local de Lite con ONNX CPU alcanzó aproximadamente 2.4 GiB de RSS máximo (Node 26, macOS ARM64). Esa medición no garantiza que una Function con 2 GB lo ejecute. Revisa memoria y duración en los logs del despliegue; no se ha validado aún inferencia en Vercel/Linux ni se han cambiado planes o recursos de pago. El modelo completo de 973 MB está destinado a un servidor local con recursos suficientes, no a la caché temporal pequeña de una Function. [Configuración de memoria de Vercel](https://vercel.com/docs/functions/configuring-functions/memory).
 
 Las imágenes nunca dependen de `/tmp`: cualquier instancia puede recuperar el sujeto y el fondo desde Blob. La caché del modelo sí es temporal. El build conserva los binarios ONNX de Linux x64 y elimina plataformas y proveedores GPU innecesarios para reducir el paquete.
 

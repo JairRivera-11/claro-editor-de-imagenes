@@ -11,6 +11,7 @@ if (!inputPath) throw new Error('Uso: node scripts/compare-segmentation.js foto.
 await mkdir(destination, { recursive: true });
 const input = await readFile(inputPath);
 const source = await sharp(input).rotate().toColourspace('srgb').png().toBuffer();
+const isRedmi = createHash('sha256').update(source).digest('hex') === '0d85698b62f34f8a9d369296d99f75f3b677289eedc24644573e1774cec1af69';
 if (worker) {
   const dir = path.join(destination, worker); await mkdir(dir, { recursive: true });
   const start = performance.now();
@@ -29,7 +30,7 @@ if (worker) {
   const { data, info } = await sharp(result.output).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   // Zonas interiores/externas anotadas visualmente SOLO para la referencia Redmi 1300².
   // No constituyen un ground truth completo ni miden precisión en todo el contorno.
-  const regions = info.width === 1300 && info.height === 1300 ? {
+  const regions = isRedmi ? {
     fondoIzquierdo: [60, 70, 120, 1150], fondoDerecho: [1120, 70, 120, 1150],
     fondoSuperior: [200, 55, 880, 30], fondoInferior: [200, 1220, 880, 25],
     tapa: [230, 480, 460, 670], pantallaInferior: [750, 880, 300, 275],
@@ -75,7 +76,7 @@ if (worker) {
   // Recortes comunes a 2×: borde exterior, cámaras, unión y pantalla inferior.
   const crops = { borde:[180,350,100,220], camaras:[280,160,350,330], union:[680,460,100,300], pantalla:[720,850,365,345] };
   const meta = await sharp(source).metadata();
-  if (meta.width === 1300 && meta.height === 1300) for (const [name,[left,top,width,height]] of Object.entries(crops)) {
+  if (isRedmi) for (const [name,[left,top,width,height]] of Object.entries(crops)) {
     const cols = [];
     for (let i = 0; i < engines.length; i++) cols.push({ input: await sharp(path.join(destination,engines[i],'white.png')).extract({left,top,width,height}).resize(width*2,height*2,{kernel:'nearest'}).png().toBuffer(),left:i*width*2,top:0 });
     await sharp({create:{width:width*8,height:height*2,channels:3,background:'#fff'}}).composite(cols).png().toFile(path.join(destination,`crop-${name}.png`));

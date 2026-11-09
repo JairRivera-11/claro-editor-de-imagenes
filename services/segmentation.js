@@ -2,19 +2,12 @@ import sharp from 'sharp';
 import * as ort from 'onnxruntime-node';
 import { rmbg } from 'rmbg';
 import { createBriaaiModel, createU2netpModel } from 'rmbg/models';
-import { stat } from 'node:fs/promises';
-import { createReadStream } from 'node:fs';
-import { createHash } from 'node:crypto';
-import path from 'node:path';
-import { root, cacheDir } from './config.js';
-
-export const models = Object.freeze({
-  birefnet: { file: 'general.onnx', bytes: 972666916, asset: 'BiRefNet-general-epoch_244.onnx', sha256: '58f621f00f5d756097615970a88a791584600dcf7c45b18a0a6267535a1ebd3c' },
-  'birefnet-lite': { file: 'lite.onnx', bytes: 224005088, asset: 'BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx', sha256: '5600024376f572a557870a5eb0afb1e5961636bef4e1e22132025467d0f03333' },
-});
+import { cacheDir, modelDir, autoDownloadModels } from './config.js';
+import { models, createModelStore } from './modelStore.js';
+export { models } from './modelStore.js';
 // Validado con la comparación Redmi; el anterior continúa disponible por configuración.
 export const defaultEngine = process.env.SEGMENTATION_ENGINE || 'birefnet-lite';
-const modelDir = process.env.BIREFNET_MODEL_DIR || path.join(root, '.cache/birefnet');
+const modelStore = createModelStore({ dir: modelDir, autoDownload: autoDownloadModels });
 let sessionEntry;
 let running = false;
 const exposed = (status, message) => Object.assign(new Error(message), { status, expose: true });
@@ -47,12 +40,7 @@ export function logitsToMask(values) {
 async function getSession(engine) {
   if (sessionEntry?.engine === engine) return sessionEntry.session;
   if (sessionEntry) { await sessionEntry.session.release(); sessionEntry = undefined; }
-  const model = models[engine], filename = path.join(modelDir, model.file);
-  const size = await stat(filename).then(s => s.size).catch(() => 0);
-  if (size !== model.bytes) throw exposed(503, `Falta el modelo ${engine} o está incompleto. Ejecuta npm run models:download -- ${engine}.`);
-  const hash = createHash('sha256');
-  for await (const chunk of createReadStream(filename)) hash.update(chunk);
-  if (hash.digest('hex') !== model.sha256) throw exposed(503, `Los pesos de ${engine} no superaron la verificación SHA-256. Descárgalos de nuevo.`);
+  const filename = await modelStore.ensure(engine);
   const threads = Number(process.env.ONNX_THREADS || 4);
   if (!Number.isInteger(threads) || threads < 1 || threads > 8) throw exposed(503, 'ONNX_THREADS debe ser un entero entre 1 y 8.');
   try {

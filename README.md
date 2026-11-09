@@ -14,7 +14,8 @@ Node.js **22.x** (22.12 o posterior dentro de esa rama), npm y conexión a Inter
 
 ```bash
 cd rembg-app
-npm install
+npm ci
+npm run models:download -- birefnet-lite
 npm run dev
 ```
 
@@ -28,13 +29,15 @@ El archivo `.env` incluido contiene `PORT=3000`. Puedes cambiarlo. Si copias el 
 
 ### Primera ejecución
 
-Se usa explícitamente `createBriaaiModel()` de `rmbg@0.1.0`. Al eliminar el primer fondo, **rmbg descargará automáticamente el modelo de IA (~44 MB)**. Esta petición puede tardar más; la interfaz muestra un indicador de procesamiento. El modelo se conserva en `.cache/rmbg/` y las siguientes ejecuciones reutilizan la descarga.
+El motor predeterminado es **BiRefNet Lite ONNX**, con pesos oficiales de 224 MB y licencia MIT. Instálalos localmente con `npm run models:download -- birefnet-lite`. Se guardan en `.cache/birefnet/` y se verifican mediante SHA-256. En Vercel se descargan automáticamente en `/tmp` al procesar la primera fotografía. La sesión ONNX se reutiliza y solo se permite una inferencia simultánea por proceso.
 
-**Licencia del modelo:** la licencia MIT de la librería `rmbg` no cubre necesariamente los pesos. BRIA publica [RMBG-1.4 con licencia para uso no comercial](https://huggingface.co/briaai/RMBG-1.4); el uso comercial requiere comprobar y obtener la licencia correspondiente de BRIA. El paquete distribuye fragmentos de un modelo Briaai; no se ha verificado independientemente la procedencia exacta de esos pesos. No asumas que el modelo incluido es gratuito para uso comercial.
+`SEGMENTATION_ENGINE` permite elegir `birefnet-lite`, `birefnet` o el motor anterior `briaai`. El motor anterior se conserva para transición, pero **su licencia no es equivalente**: BRIA publica [RMBG-1.4 para uso no comercial](https://huggingface.co/briaai/RMBG-1.4). No se activa como fallback silencioso ni debe usarse comercialmente sin la licencia correspondiente. U2NetP sigue disponible para comparación experimental.
 
-El modelo recibe una imagen estirada a 1024 × 1024; el parámetro `maxResolution` controla la salida, no la inferencia. Se conserva la resolución original admitida y se combina el alfa original con la máscara calculada. La segmentación puede fallar, especialmente con productos superpuestos o fondos similares; no se eliminan componentes ni se reconstruyen detalles automáticamente. Las composiciones siguen limitadas a 4096 px por lado y 16 megapíxeles.
+BiRefNet recibe RGB normalizado con medias/desviaciones ImageNet en NCHW a 1024 × 1024. Se conserva la proporción con relleno blanco, se aplica sigmoid a los logits de la última salida, se retira el relleno y se recupera el tamaño original. Solo se modifica alfa; el RGB procede de la fotografía original normalizada a sRGB. Las composiciones siguen limitadas a 4096 px por lado y 16 megapíxeles.
 
-En una prueba con la fotografía Redmi proporcionada (1300 × 1300), la salida directa de Briaai conservó parte del fondo verde casi opaco (alfa 252–253/255). El defecto aparece antes de la vista previa y de la composición; no está corregido. La alternativa U2NetP del mismo paquete redujo gran parte de ese fondo, pero también eliminó una zona de la pantalla, por lo que no es un reemplazo seguro para esta imagen. No se ha validado una solución general que preserve todos los detalles.
+En la referencia Redmi de 1300 × 1300, ambos BiRefNet eliminaron el rectángulo y preservaron las zonas interiores verificadas de pantalla, tapa y cámaras. Lite fue elegido por tiempo y memoria inferiores. Las evidencias están en [evidence/redmi](./evidence/redmi) y el detalle de validación en [VALIDATION.md](./VALIDATION.md). Esto no garantiza todos los productos ni sustituye revisar sus bordes.
+
+La herramienta opcional **Retocar recorte** permite borrar/restaurar desde la fotografía original, ajustar tamaño y suavidad, deshacer/rehacer y comparar antes/después. Los retoques se guardan como revisiones de máscara inmutables y se aplican al exportar PNG/JPG. El recorte automático original permanece disponible. La restauración no inventa RGB y nunca aumenta la transparencia original legítima.
 
 Las imágenes se procesan en el servidor Express; no se envían a un servicio de IA externo. En Vercel se almacenan temporalmente en Vercel Blob. ONNX Runtime ejecuta el modelo localmente en CPU. `rmbg` usa JavaScript con los binarios nativos de ONNX Runtime y sharp.
 
