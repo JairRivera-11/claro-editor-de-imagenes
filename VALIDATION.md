@@ -51,3 +51,29 @@ Se declara directamente `onnxruntime-node@1.30.0` (MIT), que ya existía transit
 ## Vercel
 
 El error de pesos ausentes se corrige mediante descarga en `/tmp/claro-birefnet`, streaming, SHA-256, publicación atómica y reutilización de sesión. Los tests simulan las respuestas de red y comprueban el archivo escrito, corrupción, truncamiento, reintento y concurrencia de descargas. No comprueban la conectividad de GitHub desde tu instancia desplegada. Consultar `VERCEL.md` antes de redeploy; el consumo de memoria medido localmente puede exceder una Function de 2 GB.
+
+
+## Ajuste Vercel 2 GB — 2026-11-12
+
+Motor añadido: `birefnet-lite-efficient`. Modelo MIT, sin nuevas dependencias npm.
+Procedencia y especificación en `licenses/BiRefNet-efficient-model-card.txt`; licencia heredada en `licenses/BiRefNet-MIT.txt`. Revisión y SHA-256 fijados en `services/modelStore.js`.
+
+Reproducción con Node 22:
+
+```sh
+npm run models:download -- birefnet-lite-efficient
+IMAGE_MEMORY_PROFILE=serverless node scripts/verify-redmi.js evidence/redmi/original.png evidence/redmi/export-efficient
+node scripts/profile-onnx.js .cache/birefnet/lite-efficient.onnx 1024 basic evidence/memory/lite-efficient-noarena-node22 10 false
+IMAGE_MEMORY_PROFILE=serverless node scripts/stress-memory.js
+npm test
+npm run build
+node scripts/check-bundle.js
+```
+
+`IMAGE_MEMORY_PROFILE=serverless` permite probar localmente los mismos límites de hilos y caché sin activar Blob. En Vercel se activa automáticamente.
+
+Resultado: 42 pruebas pasan, una integración histórica opcional omitida; la inferencia real se validó por separado con `verify-redmi.js`. Exportación PNG/JPG, alfa del fondo, zonas internas del producto, igualdad RGB del original y borrar/deshacer/rehacer/restaurar/exportar pasan. Revisión visual del JPG blanco: sin rectángulo ni pérdida visible de pantalla. Bundle trazado: 65.5 MiB (37 avisos de dependencias opcionales/plataformas). No se verificó este cambio mediante navegador ni despliegue remoto.
+
+Diez inferencias repetidas: pico 1457.3 MiB, máscaras idénticas; tiempos individuales en el JSON de evidencia. La medición es RSS del proceso en macOS ARM64, no un límite de memoria impuesto ni una prueba Linux. El perfil anterior 1024/basic alcanzó 1975.6 MiB; 512 no fue seleccionado para evitar reducir resolución de segmentación.
+
+Estrés del servicio completo: tres ciclos consecutivos con entrada 6000 × 4000 (24 MP), exportación 4000 × 4000 (16 MP), escala 2 y limpieza. Pico RSS 1841.7 MiB; evidencia `evidence/memory/service-stress.json`. El margen restante local es de unos 206 MiB y puede variar en Vercel; verificar Observability antes de considerar cerrado el incidente remoto.

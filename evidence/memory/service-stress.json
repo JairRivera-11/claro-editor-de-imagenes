@@ -1,0 +1,36 @@
+{
+  "node": "v22.23.5",
+  "platform": "darwin/arm64",
+  "checkpoints": [
+    {
+      "stage": "segment-24MP-1",
+      "rssMiB": 1302.90625,
+      "peakRssMiB": 1302.90625
+    },
+    {
+      "stage": "compose-16MP-1",
+      "rssMiB": 1184.890625,
+      "peakRssMiB": 1308.15625
+    },
+    {
+      "stage": "segment-24MP-2",
+      "rssMiB": 385.875,
+      "peakRssMiB": 1841.671875
+    },
+    {
+      "stage": "compose-16MP-2",
+      "rssMiB": 415.4375,
+      "peakRssMiB": 1841.671875
+    },
+    {
+      "stage": "segment-24MP-3",
+      "rssMiB": 738.953125,
+      "peakRssMiB": 1841.671875
+    },
+    {
+      "stage": "compose-16MP-3",
+      "rssMiB": 947.265625,
+      "peakRssMiB": 1841.671875
+    }
+  ]
+}

@@ -7,6 +7,7 @@ import multer from 'multer';
 import path from 'node:path';
 import { removeBackground, uploadBackground, updateMask, compose, cleanup } from '../controllers/imageController.js';
 import { httpError } from '../services/imageService.js';
+import { createProcessingSlot, releaseOnUploadError } from '../services/processingSlot.js';
 
 const types = { 'image/png': ['.png'], 'image/jpeg': ['.jpg', '.jpeg'], 'image/webp': ['.webp'] };
 const upload = multer({
@@ -18,18 +19,7 @@ const upload = multer({
   },
 });
 
-// Evita acumular buffers y ejecuciones ONNX simultáneas en una aplicación local.
-let processing = false;
-function processingSlot(req, res, next) {
-  if (processing) return next(httpError(429, 'Hay otra imagen en proceso. Inténtalo de nuevo en unos segundos.'));
-  processing = true;
-  res.locals.releaseSlot = () => { processing = false; };
-  next();
-}
-function releaseOnUploadError(error, req, res, next) {
-  res.locals.releaseSlot?.();
-  next(error);
-}
+const processingSlot = createProcessingSlot();
 const router = Router();
 router.get('/config', (req, res) => res.set('Cache-Control', 'no-store').json({ success: true, storage: storageMode, maxUploadBytes }));
 router.post('/blob-upload', uploadToken);
@@ -45,8 +35,8 @@ router.get('/cron/cleanup', async (req, res, next) => {
   } catch (error) { next(error); }
 });
 router.post('/remove-bg', processingSlot, upload.single('image'), removeBackground, releaseOnUploadError);
-router.post('/background', upload.single('image'), uploadBackground);
-router.post('/mask', upload.single('image'), updateMask);
-router.post('/compose', compose);
+router.post('/background', processingSlot, upload.single('image'), uploadBackground, releaseOnUploadError);
+router.post('/mask', processingSlot, upload.single('image'), updateMask, releaseOnUploadError);
+router.post('/compose', processingSlot, compose, releaseOnUploadError);
 router.delete('/cleanup/:imageId', cleanup);
 export default router;

@@ -1,0 +1,64 @@
+{
+  "node": "v26.3.0",
+  "platform": "darwin/arm64",
+  "resolution": 512,
+  "optimization": "basic",
+  "arena": false,
+  "threads": 1,
+  "loadMs": 736.8544999999999,
+  "runs": [
+    {
+      "inferenceMs": 4545.8424159999995,
+      "identicalToPrevious": null
+    },
+    {
+      "inferenceMs": 7005.388167,
+      "identicalToPrevious": true
+    },
+    {
+      "inferenceMs": 4414.513958000001,
+      "identicalToPrevious": true
+    },
+    {
+      "inferenceMs": 4530.907416000002,
+      "identicalToPrevious": true
+    }
+  ],
+  "checkpoints": [
+    {
+      "stage": "before-load",
+      "rssMiB": 78.359375,
+      "peakRssMiB": 78.375
+    },
+    {
+      "stage": "after-load",
+      "rssMiB": 483.96875,
+      "peakRssMiB": 487.328125
+    },
+    {
+      "stage": "after-inference-1",
+      "rssMiB": 703.390625,
+      "peakRssMiB": 1164.28125
+    },
+    {
+      "stage": "after-inference-2",
+      "rssMiB": 377.234375,
+      "peakRssMiB": 1172.328125
+    },
+    {
+      "stage": "after-inference-3",
+      "rssMiB": 1109.78125,
+      "peakRssMiB": 1388.890625
+    },
+    {
+      "stage": "after-inference-4",
+      "rssMiB": 798.125,
+      "peakRssMiB": 1594.703125
+    },
+    {
+      "stage": "after-export",
+      "rssMiB": 827.734375,
+      "peakRssMiB": 1594.703125
+    }
+  ]
+}

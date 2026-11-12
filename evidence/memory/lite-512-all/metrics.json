@@ -1,0 +1,54 @@
+{
+  "node": "v26.3.0",
+  "platform": "darwin/arm64",
+  "resolution": 512,
+  "optimization": "all",
+  "threads": 1,
+  "loadMs": 798.4492499999999,
+  "runs": [
+    {
+      "inferenceMs": 4239.285958,
+      "identicalToPrevious": null
+    },
+    {
+      "inferenceMs": 3913.126583,
+      "identicalToPrevious": true
+    },
+    {
+      "inferenceMs": 3965.259250000001,
+      "identicalToPrevious": true
+    }
+  ],
+  "checkpoints": [
+    {
+      "stage": "before-load",
+      "rssMiB": 78.140625,
+      "peakRssMiB": 78.15625
+    },
+    {
+      "stage": "after-load",
+      "rssMiB": 478.859375,
+      "peakRssMiB": 478.875
+    },
+    {
+      "stage": "after-inference-1",
+      "rssMiB": 922.21875,
+      "peakRssMiB": 1139.25
+    },
+    {
+      "stage": "after-inference-2",
+      "rssMiB": 1118.953125,
+      "peakRssMiB": 1808.71875
+    },
+    {
+      "stage": "after-inference-3",
+      "rssMiB": 939.5,
+      "peakRssMiB": 1808.71875
+    },
+    {
+      "stage": "after-export",
+      "rssMiB": 854.984375,
+      "peakRssMiB": 1808.71875
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "engine": "birefnet-lite-efficient",
+  "dimensions": [
+    1300,
+    1300
+  ],
+  "backgroundProbesTransparent": true,
+  "productProbesOpaque": true,
+  "allOriginalRgbPreserved": true,
+  "pngAlpha": true,
+  "jpegOpaque": true,
+  "eraseUndoRedoRestoreExport": true,
+  "node": "v22.23.5"
+}

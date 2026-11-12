@@ -24,7 +24,7 @@ export async function uploadBackground(req, res, next) {
   } catch (error) {
     await uploaded?.dispose().catch(console.error);
     next(error);
-  }
+  } finally { res.locals.releaseSlot?.(); }
 }
 
 export async function compose(req, res, next) {
@@ -32,6 +32,7 @@ export async function compose(req, res, next) {
     const result = await images.compose(req.body);
     res.json({ success: true, ...result });
   } catch (error) { next(error); }
+  finally { res.locals.releaseSlot?.(); }
 }
 
 export async function updateMask(req, res, next) {
@@ -44,7 +45,7 @@ export async function updateMask(req, res, next) {
   } catch (error) {
     await uploaded?.dispose().catch(console.error);
     next(error);
-  }
+  } finally { res.locals.releaseSlot?.(); }
 }
 
 export async function cleanup(req, res, next) {

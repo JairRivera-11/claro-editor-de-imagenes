@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 export const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 dotenv.config({ path: path.join(root, '.env'), quiet: true });
 export const isVercel = process.env.VERCEL === '1';
+export const constrainedMemory = isVercel || process.env.IMAGE_MEMORY_PROFILE === 'serverless';
 export const storageMode = isVercel ? 'blob' : (process.env.STORAGE_DRIVER || 'local');
 if (!['local', 'blob'].includes(storageMode)) throw new Error('STORAGE_DRIVER debe ser local o blob.');
 export const uploadsDir = process.env.REMBG_UPLOADS_DIR || path.join(isVercel ? tmpdir() : root, 'uploads');

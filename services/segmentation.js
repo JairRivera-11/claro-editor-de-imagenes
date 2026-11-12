@@ -2,12 +2,19 @@ import sharp from 'sharp';
 import * as ort from 'onnxruntime-node';
 import { rmbg } from 'rmbg';
 import { createBriaaiModel, createU2netpModel } from 'rmbg/models';
-import { cacheDir, modelDir, autoDownloadModels } from './config.js';
+import { cacheDir, modelDir, autoDownloadModels, constrainedMemory } from './config.js';
 import { models, createModelStore } from './modelStore.js';
 export { models } from './modelStore.js';
 // Validado con la comparación Redmi; el anterior continúa disponible por configuración.
+export function resolveEngine(engine, constrained = constrainedMemory) {
+  // Compatibilidad con despliegues que conservan la variable anterior.
+  if (constrained && engine === 'birefnet-lite') return 'birefnet-lite-efficient';
+  if (constrained && engine !== 'birefnet-lite-efficient') throw exposed(503, 'Con 2 GB usa SEGMENTATION_ENGINE=birefnet-lite-efficient. Los motores históricos requieren un servidor con más memoria.');
+  return engine;
+}
 export const defaultEngine = process.env.SEGMENTATION_ENGINE || 'birefnet-lite';
-const modelStore = createModelStore({ dir: modelDir, autoDownload: autoDownloadModels });
+if (constrainedMemory) { sharp.cache(false); sharp.concurrency(1); }
+const modelStore = createModelStore({ dir: modelDir, autoDownload: autoDownloadModels, constrainedMemory });
 let sessionEntry;
 let running = false;
 const exposed = (status, message) => Object.assign(new Error(message), { status, expose: true });
@@ -41,11 +48,11 @@ async function getSession(engine) {
   if (sessionEntry?.engine === engine) return sessionEntry.session;
   if (sessionEntry) { await sessionEntry.session.release(); sessionEntry = undefined; }
   const filename = await modelStore.ensure(engine);
-  const threads = Number(process.env.ONNX_THREADS || 4);
+  const threads = constrainedMemory ? 1 : Number(process.env.ONNX_THREADS || 4);
   if (!Number.isInteger(threads) || threads < 1 || threads > 8) throw exposed(503, 'ONNX_THREADS debe ser un entero entre 1 y 8.');
   try {
     const session = await ort.InferenceSession.create(filename, {
-      executionProviders: ['cpu'], graphOptimizationLevel: 'all',
+      executionProviders: ['cpu'], graphOptimizationLevel: engine === 'birefnet-lite-efficient' ? 'basic' : 'all',
       intraOpNumThreads: threads, interOpNumThreads: 1, executionMode: 'sequential',
       enableCpuMemArena: false, enableMemPattern: false,
     });
@@ -73,6 +80,7 @@ export async function applyMask(source, mask) {
 }
 
 export async function segment(source, engine = defaultEngine) {
+  engine = resolveEngine(engine);
   if (!['briaai', 'u2netp', ...Object.keys(models)].includes(engine)) throw exposed(400, 'Motor de segmentación desconocido.');
   if (running) throw exposed(429, 'Hay otra imagen en proceso. Inténtalo de nuevo en unos segundos.');
   running = true;

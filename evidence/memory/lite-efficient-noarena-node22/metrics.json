@@ -1,0 +1,118 @@
+{
+  "node": "v22.23.5",
+  "platform": "darwin/arm64",
+  "resolution": 1024,
+  "optimization": "basic",
+  "arena": false,
+  "threads": 1,
+  "loadMs": 557.5374590000001,
+  "runs": [
+    {
+      "inferenceMs": 12860.998334,
+      "identicalToPrevious": null
+    },
+    {
+      "inferenceMs": 11687.758791,
+      "identicalToPrevious": true
+    },
+    {
+      "inferenceMs": 10985.277542000003,
+      "identicalToPrevious": true
+    },
+    {
+      "inferenceMs": 13751.236792000003,
+      "identicalToPrevious": true
+    },
+    {
+      "inferenceMs": 23074.250417000003,
+      "identicalToPrevious": true
+    },
+    {
+      "inferenceMs": 14514.91575,
+      "identicalToPrevious": true
+    },
+    {
+      "inferenceMs": 10877.994042000006,
+      "identicalToPrevious": true
+    },
+    {
+      "inferenceMs": 11718.692209,
+      "identicalToPrevious": true
+    },
+    {
+      "inferenceMs": 12404.362166000006,
+      "identicalToPrevious": true
+    },
+    {
+      "inferenceMs": 10927.237791000007,
+      "identicalToPrevious": true
+    }
+  ],
+  "checkpoints": [
+    {
+      "stage": "before-load",
+      "rssMiB": 84.078125,
+      "peakRssMiB": 84.078125
+    },
+    {
+      "stage": "after-load",
+      "rssMiB": 466.53125,
+      "peakRssMiB": 466.53125
+    },
+    {
+      "stage": "after-inference-1",
+      "rssMiB": 1161.6875,
+      "peakRssMiB": 1220.96875
+    },
+    {
+      "stage": "after-inference-2",
+      "rssMiB": 936.046875,
+      "peakRssMiB": 1426.671875
+    },
+    {
+      "stage": "after-inference-3",
+      "rssMiB": 867.5625,
+      "peakRssMiB": 1426.671875
+    },
+    {
+      "stage": "after-inference-4",
+      "rssMiB": 236.71875,
+      "peakRssMiB": 1426.671875
+    },
+    {
+      "stage": "after-inference-5",
+      "rssMiB": 201.828125,
+      "peakRssMiB": 1426.671875
+    },
+    {
+      "stage": "after-inference-6",
+      "rssMiB": 1070.71875,
+      "peakRssMiB": 1426.671875
+    },
+    {
+      "stage": "after-inference-7",
+      "rssMiB": 1044.1875,
+      "peakRssMiB": 1426.671875
+    },
+    {
+      "stage": "after-inference-8",
+      "rssMiB": 393.078125,
+      "peakRssMiB": 1457.234375
+    },
+    {
+      "stage": "after-inference-9",
+      "rssMiB": 837.984375,
+      "peakRssMiB": 1457.234375
+    },
+    {
+      "stage": "after-inference-10",
+      "rssMiB": 1234.125,
+      "peakRssMiB": 1457.234375
+    },
+    {
+      "stage": "after-export",
+      "rssMiB": 820.828125,
+      "peakRssMiB": 1457.234375
+    }
+  ]
+}

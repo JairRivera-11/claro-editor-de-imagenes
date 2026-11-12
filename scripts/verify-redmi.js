@@ -13,7 +13,7 @@ process.env.STORAGE_DRIVER='local';
 const { initializeStorage, removeBackground, saveMask, compose, cleanup }=await import('../services/imageService.js');
 const { releaseModels }=await import('../services/segmentation.js');
 const inputPath=process.argv[2] || 'evidence/redmi/original.png';
-const dest='evidence/redmi/export';await mkdir(dest,{recursive:true});
+const dest=process.argv[3] || 'evidence/redmi/export';await mkdir(dest,{recursive:true});
 let id;
 try {
   await initializeStorage();

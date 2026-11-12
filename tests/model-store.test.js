@@ -52,3 +52,9 @@ test('Vercel usa directorio temporal y habilita descarga sin depender del build'
   const config=JSON.parse(output.trim());
   assert.equal(config.modelDir,path.join(tmpdir(),'claro-birefnet'));assert.equal(config.autoDownloadModels,true);
 });
+test('descarga el modelo eficiente desde su URL fijada y verifica su contenido', async t => {
+  const dir = await fixture(t);
+  const url = 'https://huggingface.co/test/model/resolve/revision/model.onnx';
+  const store = createModelStore({dir, autoDownload:true, catalog:{test:{...catalog.test,url}}, fetchImpl:async requested=>{assert.equal(requested,url);return new Response(bytes);}});
+  assert.deepEqual(await readFile(await store.ensure('test')),bytes);
+});

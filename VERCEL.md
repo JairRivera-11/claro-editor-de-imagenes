@@ -51,15 +51,25 @@ Haz Deploy o Redeploy después de conectar Blob y configurar las variables.
 4. Prueba también una imagen de más de 4,5 MB y menos de 10 MB.
 5. Comprueba la ejecución del cron en la sección Cron Jobs del proyecto.
 
-El motor predeterminado es **BiRefNet Lite** (224 MB). En Vercel se descarga automáticamente desde el release oficial en `/tmp/claro-birefnet/lite.onnx` al procesar la primera imagen. La descarga se transmite a disco, se comprueban tamaño y SHA-256 y solo entonces se carga en ONNX. Una instancia caliente reutiliza la sesión; una instancia nueva puede descargar otra vez. El límite de la petición es 300 segundos y el de la descarga, 120 segundos. Un fallo de descarga permite reintentar sin dejar un modelo parcial activo.
+### Configuración para 2 GB de memoria
 
-### Error «Falta el modelo birefnet-lite»
+En Vercel se selecciona **birefnet-lite-efficient**, una exportación MIT de BiRefNet Lite con entrada 1024 × 1024 y convoluciones que evitan los tensores intermedios grandes de la exportación anterior. Mantiene letterbox, normalización ImageNet, sigmoid y resolución original de la máscara. Los pesos (199.7 MB) se descargan de Hugging Face con revisión fija y SHA-256 verificado, mediante streaming a `/tmp/claro-birefnet/lite-efficient.onnx`; no forman parte del bundle. La sesión se reutiliza.
 
-Ese error ocurría porque el código buscaba `.cache/birefnet` dentro del paquete desplegado, pero `.cache` está excluido. Publica la versión con `services/modelStore.js`, `services/config.js` y `services/segmentation.js` actualizados y genera **un nuevo despliegue del código actualizado**. No ejecutes la descarga en el build ni incluyas `.cache` en Git: la instalación local no se transfiere a Vercel.
+Variables recomendadas en Production y Preview:
 
-Conserva `SEGMENTATION_ENGINE=birefnet-lite` o deja esa variable sin definir. No establezcas `BIREFNET_AUTO_DOWNLOAD=0` en Vercel; elimina cualquier `BIREFNET_MODEL_DIR` que apunte a una ruta de tu computadora. El valor predeterminado de descarga en Vercel ya está habilitado.
+```text
+SEGMENTATION_ENGINE=birefnet-lite-efficient
+ONNX_THREADS=1
+BIREFNET_AUTO_DOWNLOAD=1
+```
 
-**Recursos:** la prueba local de Lite con ONNX CPU alcanzó aproximadamente 2.4 GiB de RSS máximo (Node 26, macOS ARM64). Esa medición no garantiza que una Function con 2 GB lo ejecute. Revisa memoria y duración en los logs del despliegue; no se ha validado aún inferencia en Vercel/Linux ni se han cambiado planes o recursos de pago. El modelo completo de 973 MB está destinado a un servidor local con recursos suficientes, no a la caché temporal pequeña de una Function. [Configuración de memoria de Vercel](https://vercel.com/docs/functions/configuring-functions/memory).
+Elimina `BIREFNET_MODEL_DIR` si apunta a tu computadora. Si conservas `SEGMENTATION_ENGINE=birefnet-lite`, Vercel lo convierte automáticamente al motor eficiente. Los motores históricos siguen disponibles localmente; en el perfil de 2 GB se rechazan antes de cargar sus pesos.
+
+El perfil Vercel fuerza un hilo ONNX, ejecución secuencial, optimización básica, arena y patrones de memoria desactivados, Sharp sin caché y con un hilo. Las rutas de eliminación, fondo, retoque y composición comparten un cupo por instancia, adquirido antes del multipart. Una petición simultánea recibe 429 y puede reintentarse; cerrar el navegador no libera una inferencia aún activa.
+
+Configura Node **22.x** también en Project Settings: el aviso «Project Setting overridden by package.json» indica una diferencia de versiones; no es el error de memoria. Conserva los 2 GB y crea un **nuevo despliegue del código actualizado**. No necesitas descargar los pesos en el build. La primera petición puede tardar más por la descarga (timeout de descarga 120 s y Function 300 s).
+
+Validación local con Node 22.23.5/macOS ARM64: diez inferencias de 1024 px con máscaras idénticas, pico RSS **1457.3 MiB**, y Redmi exportado sin rectángulo, con pantalla conservada y RGB original intacto. PNG, JPG y retoque verificados. Tres ciclos de entrada de 24 MP y exportación de 16 MP alcanzaron **1841.7 MiB**, con menor margen. Evidencias en `evidence/memory/` y `evidence/redmi/export-efficient/`. **No se ha ejecutado esta revisión en Vercel/Linux**: tras desplegar, verifica el pico real en Observability, varias imágenes consecutivas y una exportación grande. Las cifras locales no garantizan el mismo consumo en Linux. [Memoria de Vercel](https://vercel.com/docs/functions/configuring-functions/memory).
 
 Las imágenes nunca dependen de `/tmp`: cualquier instancia puede recuperar el sujeto y el fondo desde Blob. La caché del modelo sí es temporal. El build conserva los binarios ONNX de Linux x64 y elimina plataformas y proveedores GPU innecesarios para reducir el paquete.
 

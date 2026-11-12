@@ -6,6 +6,7 @@ import { Transform } from 'node:stream';
 import path from 'node:path';
 
 export const models = Object.freeze({
+  'birefnet-lite-efficient': { file: 'lite-efficient.onnx', bytes: 199681624, sha256: '50a57872cc739192446da2a934159f957c81af8b5a161dfda8e3daa51660ca67', url: 'https://huggingface.co/CoderViking/birefnet-lite-onnx/resolve/dc06453148f01ef4131f17e9b791345e32e8ee78/birefnet-lite-1024.onnx' },
   birefnet: { file: 'general.onnx', bytes: 972666916, asset: 'BiRefNet-general-epoch_244.onnx', sha256: '58f621f00f5d756097615970a88a791584600dcf7c45b18a0a6267535a1ebd3c' },
   'birefnet-lite': { file: 'lite.onnx', bytes: 224005088, asset: 'BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx', sha256: '5600024376f572a557870a5eb0afb1e5961636bef4e1e22132025467d0f03333' },
 });
@@ -27,7 +28,7 @@ export function createModelStore({ dir, autoDownload = false, fetchImpl = fetch,
     if (!autoDownload) throw exposed(`Falta el modelo ${engine} o está incompleto. Ejecuta npm run models:download -- ${engine}.`);
     await mkdir(dir, { recursive: true });
     const temp = target + '.' + randomUUID() + '.part';
-    const url = `https://github.com/ZhengPeng7/BiRefNet/releases/download/v1/${model.asset}`;
+    const url = model.url || `https://github.com/ZhengPeng7/BiRefNet/releases/download/v1/${model.asset}`;
     try {
       const response = await fetchImpl(url, { signal: AbortSignal.timeout(timeoutMs) });
       if (!response.ok || !response.body) throw new Error(`HTTP ${response.status}`);
@@ -44,7 +45,7 @@ export function createModelStore({ dir, autoDownload = false, fetchImpl = fetch,
       return target;
     } catch (error) {
       console.error(`Descarga de ${engine}: ${error.message}`);
-      throw exposed(`No se pudo preparar ${engine}. Reintenta la carga; se necesita conexión a GitHub y espacio temporal para el modelo.`);
+      throw exposed(`No se pudo preparar ${engine}. Reintenta la carga; se necesita conexión al repositorio del modelo y espacio temporal para el modelo.`);
     } finally { await rm(temp, { force: true }); }
   }
   return { ensure(engine) {
